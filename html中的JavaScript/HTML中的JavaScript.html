@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML中的JavaScript</title>
+    <link rel="preload" href="add.js">
+</head>
+<body>
+   <!-- script标签 -->
+   <!-- 标签的属性（八个属性）-->
+   <!-- 
+        1、 async:（异步） 立即下载，不阻止页面其他动作。并行请求。
+        2、 charset:指定代码字符集。声明 charset 是没有必要的，因为页面文档必须使用UTF-8，
+            而 script 元素会从页面文档中继承这个属性。
+        3、 crossorigin: CORS 设置。crossorigin="anonymous":对此元素的 CORS 请求将不设置凭据标志。
+            use-credentials	对此元素的CORS请求将设置凭证标志；这意味着请求将提供凭据。
+            设置一个空的值，如 crossorigin 或 crossorigin=""，和设置 anonymous 的效果一样。
+        4、 defer：（异步） 这个布尔属性被设定用来通知浏览器该脚本将在文档完成解析后，触发 DOMContentLoaded 事件前执行。
+            有 defer 属性的脚本会阻止 DOMContentLoaded 事件，直到脚本被加载并且解析完成。
+        5、 src： 定义引用外部脚本的URI，这可以用来代替直接在文档中嵌入脚本。
+            指定了 src 属性的script元素标签内不应该再有嵌入的脚本（会忽略标签中的内容）。
+        6、 type： 该属性定义script元素包含或src引用的脚本语言。属性的值为MIME类型; 
+            支持的MIME类型包括text/javascript, text/ecmascript, application/javascript, 和application/ecmascript。
+            如果没有定义这个属性，脚本会被视作JavaScript。
+            如果MIME类型不是JavaScript类型（上述支持的类型），元素所包含的内容会被当作数据块而不会被浏览器执行。
+            如果type属性为module，代码会被当作JavaScript模块。
+        7、 language : (废弃)和type属性类似，这个属性定义脚本使用的语言。
+            但是与type不同的是，这个属性的可能值从未被标准化过。请用type属性代替这个属性。
+        8、 integrity：指定哈希值。 子资源完整性(SRI)是允许浏览器检查其获得的资源（例如从 CDN 获得的）是否被篡改的一项安全特性。
+            确保CDN 不会提供恶意内容。
+            它通过验证获取文件的哈希值是否和你提供的哈希值一样来判断资源是否被篡改。（https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity）
+    -->
+    <!-- 注意点：
+        1、 执行时会按照script标签出现的顺序依次解析（在没有使用defer和async的情况下）。
+        2、 第二段script标签的代码必须在第一个script解析完才会执行。
+        3、 使用src属性的script标签，在标签中不能在包含其他JavaScript代码。浏览器会忽略其中的代码。
+    -->
+    <!-- 例如 -->
+    <script>
+        console.log(a)
+        // Uncaught ReferenceError: a is not defined
+        // 如上面所说：第二段script标签的代码必须在第一个script解析完才会执行。
+        // 第一段执行查找a，但是在当前标签内并没有a,执行完毕报错。
+        // 但是如果两个标签反过来就可以执行了。
+    </script>
+    <script>
+        var a = 1
+    </script>
+    <!-- 
+        script标签的位置
+        尽量不要放在头部（head标签里）。会造成长时间白屏。
+        因为浏览器会先解析和执行在头部加载的文件、或者代码块之后才会才会加载body中的元素。
+        通常防在body结束标签之前。
+    -->
+
+    <!-- 
+        script标签推迟执行
+        在标签上设置defer属性。 相当于告诉浏览器立即下载，延迟执行。
+        有defer属性的标签会在解析到结束的html标签之后在执行。
+        HTML5规范要求：如果有多个含有defer的标签，会按照他们的顺序依次执行，并且都在DomContentLoaded事件之前执行。
+        实际中，并不一定会按照规范来，最好只包含一个带有defer属性的标签。
+        
+    -->
+    <!-- defer示例 -->
+    <div class="deferScript" style="width: 100px;height: 100px;"></div>
+    <script src="./defer.js" defer> </script>
+    <script src="./defer2.js" defer> </script>
+
+    <!-- 
+        script标签异步执行
+        在标签上设置async属性。 目的是告诉浏览器当前的脚本，不必等此脚本的执行和下载完之后再加载页面，
+        同样也不必等到该异步脚本下载和执行后再加载其他脚本。不会按照书写的前后顺序来执行。
+        异步脚本不应该在加载期间修改DOM。
+    -->
+     <!-- async示例 -->
+     <div class="asyncScript" style="width: 100px;height: 100px;"></div>
+     <script src="./async.js" async> </script>
+     <script src="./async2.js" async> </script>
+    <!-- 
+        async与defer的相同点：都是异步，告诉浏览器当前的脚本，不必等此脚本的执行和下载完之后再加载页面。
+            都不可以使用document.write()
+        async与defer的不同点：带有async的标签并不会按照书写的前后顺序来执行。
+
+    -->
+   
+
+    <!-- 
+        动态加载脚本
+        通过创建script元素并将其添加到DOM中。
+        在添加到DOM之前不会发送请求。默认为异步加载，相当于添加了async属性。
+        可以通过关闭async的形式设置为同步。
+        注意：
+            以这种方式所获取的资源对浏览器预加载器是不可见的。会严重影响它们在资源获取队列中的优先级。
+            可以通过在头部显式声明的方式解决。
+        <link rel="preload" href="add.js">
+    -->
+    <script>
+        var newScript = document.createElement('script')
+        newScript.src = 'add.js'
+        newScript.async = false
+        document.head.append(newScript)
+    </script>
+
+    <!-- 
+        行内代码与外部文件
+        使用外部文件的优点：
+            可维护性：JavaScript如果分散到很多HTML页面，会导致维护困难。用一个目录，更容易维护。
+            缓存：浏览器会根据特定的设置缓存所有的外部链接的JavaScript文件，假如说两个文件都用到了同一个文件，
+                那么这个文件只需下载一次。提升加载速度。
+            适应未来： 通过吧JavaScript放入到外部文件中，就不必考虑用XHTML或者注释黑科技了。因为包含外部JavaScript的语法在
+                HTML和XHTML中是一样的。
+    
+    -->
+
+    <!-- 
+        文档模式
+        doctype 可以切换文档格式。最初的文档格式有两种：混杂模式和标准模式。
+        混杂模式让IE像IE5一样 标准模式让IE具有兼容标准的行为。
+        第三种模式：准标准模式，主要区别在如何对待图片元素周围的空白。
+        混杂模式： 以省略文档开头的doctype作为开关。（尽量不要使用，在各个浏览器中差异较大。）
+        标准模式： <!DOCTYPE html>
+        准标准模式通过过渡性文档类型（Transitional） 和框架级文档类型（Frameset）来触发。（和标准模式很接近，很少需要区分。）
+    -->
+
+
+    <noscript>
+        <p></p>
+    </noscript>
+    <!-- 
+        noscript 元素
+        在以下两种情况下会显示该标签:
+        1、浏览器不支持脚本
+        2、浏览器对脚本的支持被关闭。
+    -->
+
+</body>
+</html>
